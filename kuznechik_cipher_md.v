@@ -36,8 +36,8 @@ module kuznechik_cipher(
     always @(clk_i) begin
         if (!resetn_i) begin
             StateNext <= IDLE;
-            KeyCounter <= 0;
-            LCounter <= 0;
+            KeyCounter <= d'0;
+            LCounter <= d'0;
         end
         else begin
             if (State == IDLE) begin
@@ -49,8 +49,8 @@ module kuznechik_cipher(
                 end
             end
             else if (State == KEY_PHASE) begin
-                if (KeyCounter < 10) begin
-                    KeyCounter <= KeyCounter + 1;
+                if (KeyCounter < d'10) begin
+                    KeyCounter <= KeyCounter + d'1;
                     StateNext <= S_PHASE;
                 end
                 else begin
@@ -61,15 +61,15 @@ module kuznechik_cipher(
                 StateNext <= L_PHASE;
             end
             else if (State == L_PHASE) begin
-                if (LCounter < 16) begin
-                    LCounter <= LCounter + 1;
+                if (LCounter < d'16) begin
+                    LCounter <= LCounter + d'1;
                 end
                 else begin
                     StateNext <= KEY_PHASE;
                 end
             end
             else if (State == FINISH) begin
-                KeyCounter <= 0;
+                KeyCounter <= d'0;
                 if (request_i) begin
                     StateNext <= KEY_PHASE;
                 end
