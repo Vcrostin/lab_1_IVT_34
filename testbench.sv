@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module testbench();
 
     logic [127:0] data_to_cipher [11];
