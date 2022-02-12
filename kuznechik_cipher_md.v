@@ -24,10 +24,10 @@ module kuznechik_cipher(
     reg[4:0] LCounter;
     always @(clk_i) begin
         if (!resetn_i) begin
-            StateNext <= IDLE;
+            State <= IDLE;
         end
         else begin
-            StateNext <= State
+            State <= StateNext
         end
     end
 
@@ -35,37 +35,50 @@ module kuznechik_cipher(
     reg[4:0] LCounter;
     always @(clk_i) begin
         if (!resetn_i) begin
-            State <= IDLE;
+            StateNext <= IDLE;
             KeyCounter <= 0;
             LCounter <= 0;
         end
         else begin
-            if (StateNext == IDLE) begin
-                State <= KEY_PHASE;
-            end
-            else if (StateNext == KEY_PHASE) begin
-                if (KeyCounter < 10) begin
-                    KeyCounter <= KeyCounter + 1;
-                    State <= S_PHASE;
+            if (State == IDLE) begin
+                if (request_i) begin
+                    StateNext <= KEY_PHASE;
                 end
                 else begin
-                    State <= FINISH;
+                    StateNext <= IDLE;
                 end
             end
-            else if (StateNext == S_PHASE) begin
-                State <= L_PHASE;
+            else if (State == KEY_PHASE) begin
+                if (KeyCounter < 10) begin
+                    KeyCounter <= KeyCounter + 1;
+                    StateNext <= S_PHASE;
+                end
+                else begin
+                    StateNext <= FINISH;
+                end
             end
-            else if (StateNext == L_PHASE) begin
+            else if (State == S_PHASE) begin
+                StateNext <= L_PHASE;
+            end
+            else if (State == L_PHASE) begin
                 if (LCounter < 16) begin
                     LCounter <= LCounter + 1;
                 end
                 else begin
-                    State <= KEY_PHASE;
+                    StateNext <= KEY_PHASE;
                 end
             end
-            else if (StateNext == FINISH) begin
+            else if (State == FINISH) begin
                 KeyCounter <= 0;
-                State <= IDLE;
+                if (request_i) begin
+                    StateNext <= KEY_PHASE;
+                end
+                else if (ack_i) begin
+                    StateNext <= IDLE;
+                end
+                else begin
+                    StateNext <= FINISH;
+                end
             end
         end
     end
