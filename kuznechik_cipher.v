@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module kuznechik_cipher(
     input               clk_i,      // Тактовый сигнал
                         resetn_i,   // Синхронный сигнал сброса с активным уровнем LOW
