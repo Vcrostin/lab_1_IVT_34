@@ -302,7 +302,7 @@ def L_stage(val):
 
 
 if __name__ == '__main__':
-    msg = 0x1122334455667700ffeeddccbbaa9988
+    msg = 0x1b877fafa3ba0026e8ef95de495ac74c
     ciphered_msg = k_chipher(msg)
     # msg = 0x64a59400000000000000000000000000
     # for i in range(16):

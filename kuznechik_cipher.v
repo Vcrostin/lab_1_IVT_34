@@ -54,18 +54,25 @@ module kuznechik_cipher(
             State <= IDLE;
             KeyCounter <= 'd0;
             LCounter <= 'd0;
+            data_main <= 'd0;
+            valid_o <= 'd0;
         end
         else begin
             if (State == IDLE) begin
+                valid_o <= 'd0;
+                KeyCounter <= 'd0;
                 if (request_i) begin
                     State <= KEY_PHASE;
-                    KeyCounter <= 'd0;
+                    data_main <= data_i;
                 end
                 else begin
                     State <= IDLE;
+                    data_main <= data_main;
                 end
             end
             else if (State == KEY_PHASE) begin
+                data_main <= key_mem[KeyCounter] ^ data_main;
+                valid_o <= 'd0;
                 if (KeyCounter < 'd9) begin
                     State <= S_PHASE;
                 end
@@ -77,8 +84,10 @@ module kuznechik_cipher(
             else if (State == S_PHASE) begin
                 State <= L_PHASE;
                 KeyCounter <= KeyCounter + 'd1;
+                data_main <= {S_box_mem[data_main[127:120]], S_box_mem[data_main[119:112]], S_box_mem[data_main[111:104]], S_box_mem[data_main[103:96]], S_box_mem[data_main[95:88]], S_box_mem[data_main[87:80]], S_box_mem[data_main[79:72]], S_box_mem[data_main[71:64]], S_box_mem[data_main[63:56]], S_box_mem[data_main[55:48]], S_box_mem[data_main[47:40]], S_box_mem[data_main[39:32]], S_box_mem[data_main[31:24]], S_box_mem[data_main[23:16]], S_box_mem[data_main[15:8]], S_box_mem[data_main[7:0]]};
             end
             else if (State == L_PHASE) begin
+                data_main <= {L_mul_148_mem[data_main[127:120]] ^ L_mul_32_mem[data_main[119:112]] ^ L_mul_133_mem[data_main[111:104]] ^ L_mul_16_mem[data_main[103:96]] ^ L_mul_194_mem[data_main[95:88]] ^ L_mul_192_mem[data_main[87:80]] ^ data_main[79:72] ^ L_mul_251_mem[data_main[71:64]] ^ data_main[63:56] ^ L_mul_192_mem[data_main[55:48]] ^ L_mul_194_mem[data_main[47:40]] ^ L_mul_16_mem[data_main[39:32]] ^ L_mul_133_mem[data_main[31:24]] ^ L_mul_32_mem[data_main[23:16]] ^ L_mul_148_mem[data_main[15:8]] ^ data_main[7:0], data_main[127:8]};
                 if (LCounter < 'd15) begin
                     LCounter <= LCounter + 'd1;
                     State <= L_PHASE;
@@ -88,12 +97,20 @@ module kuznechik_cipher(
                 end
             end
             else if (State == FINISH) begin
-                KeyCounter <= 'd0;
+                
                 if (request_i) begin
-                    State <= KEY_PHASE;
+                    State <= IDLE;
+                    data_o <= data_main;
+                    valid_o <= 'd1;
+                    KeyCounter <= 'd0;
+                    LCounter <= 'd0;
                 end
                 else if (ack_i) begin
-                    State <= IDLE;
+                    State <= KEY_PHASE;
+                    data_o <= data_main;
+                    valid_o <= 'd1;
+                    KeyCounter <= 'd0;
+                    LCounter <= 'd0;
                 end
                 else begin
                     State <= FINISH;
@@ -102,36 +119,6 @@ module kuznechik_cipher(
         end
     end
 
-
-    always @(posedge clk_i) begin
-        if (!resetn_i) begin
-            data_main <= 'b0;
-            valid_o <= 'b0;
-        end
-        else begin
-            case (State)
-                IDLE: begin
-                    if (request_i) begin
-                        data_main <= data_i;
-                    end
-                    else begin
-                        data_main <= data_main;
-                    end
-                    valid_o <= 'b0;
-                end
-                KEY_PHASE: begin
-                    data_main <= key_mem[KeyCounter] ^ data_main;
-                    valid_o <= 'b0;
-                end
-                S_PHASE: data_main <= {S_box_mem[data_main[127:120]], S_box_mem[data_main[119:112]], S_box_mem[data_main[111:104]], S_box_mem[data_main[103:96]], S_box_mem[data_main[95:88]], S_box_mem[data_main[87:80]], S_box_mem[data_main[79:72]], S_box_mem[data_main[71:64]], S_box_mem[data_main[63:56]], S_box_mem[data_main[55:48]], S_box_mem[data_main[47:40]], S_box_mem[data_main[39:32]], S_box_mem[data_main[31:24]], S_box_mem[data_main[23:16]], S_box_mem[data_main[15:8]], S_box_mem[data_main[7:0]]};
-                L_PHASE: data_main <= {L_mul_148_mem[data_main[127:120]] ^ L_mul_32_mem[data_main[119:112]] ^ L_mul_133_mem[data_main[111:104]] ^ L_mul_16_mem[data_main[103:96]] ^ L_mul_194_mem[data_main[95:88]] ^ L_mul_192_mem[data_main[87:80]] ^ data_main[79:72] ^ L_mul_251_mem[data_main[71:64]] ^ data_main[63:56] ^ L_mul_192_mem[data_main[55:48]] ^ L_mul_194_mem[data_main[47:40]] ^ L_mul_16_mem[data_main[39:32]] ^ L_mul_133_mem[data_main[31:24]] ^ L_mul_32_mem[data_main[23:16]] ^ L_mul_148_mem[data_main[15:8]] ^ data_main[7:0], data_main[127:8]};
-                FINISH: begin
-                    valid_o <= 'b1;
-                    data_o <= data_main;
-                end
-            endcase
-        end
-    end
 
     assign busy_o = !(State == IDLE || State == FINISH);
 
