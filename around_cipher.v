@@ -182,14 +182,7 @@ module kuznechik_cipher_apb_wrapper(
         end
     end
 
-    assign    pslverr_o = pwrite_i && ((20 <= paddr_i) || (paddr_i == 0 && pstrb_i & 'hc));
-    // reg pready;
-    // always @(posedge pclk_i)
-	// begin
-	// 	pready <= penable_i;
-	// end
-
-    // assign pready_o = pready;
+    // assign    pslverr_o = pwrite_i && ((20 <= paddr_i) || (paddr_i == 0 && pstrb_i & 'hc));
 
 
 
